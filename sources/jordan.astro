@@ -1,0 +1,790 @@
+---
+/*
+ * sources/jordan.astro — mirrored from ukwebmarketing.com
+ *
+ * Source of the canonical /jordan page on ukwebmarketing.com. Mirrored
+ * here for transparency + so anyone evaluating my stack choices can
+ * read the same Astro source I ship.
+ *
+ * This file is a frozen snapshot, not a live build. It will drift from
+ * the production page over time; the canonical version is always at:
+ *   https://ukwebmarketing.com/jordan/
+ *   https://github.com/sansware (live source — private)
+ *
+ * Original file header preserved verbatim below.
+ */
+/*
+ * /jordan — Founder bio page (split from /about, 2026-06-03).
+ *
+ * The "Who I am" + "How I got here" + credentials + cert content
+ * lives here. /about becomes the company-side page. Both pages
+ * cross-link in both directions.
+ *
+ * Section order:
+ *   1. Hero            — Name, role, one-sentence framing.
+ *   2. Bio             — Brief (brief §2d "Who I am").
+ *   3. Credentials     — Loughborough + HarvardX cert link (brief §2g).
+ *   4. How this informs the work (brief §2g).
+ *   5. How I got here  — Weebly → Wix → WordPress → systems (brief §2f).
+ *   5b. Frameworks I've published — named methodologies pulled from the
+ *       blog collection (posts with a `framework` frontmatter block),
+ *       linked to evidence on /work + /blog.
+ *   6. What I operate  — TWHQ + UKWM (brief §2d "What I operate") +
+ *       author→evidence cross-links to /work and /blog.
+ *   7. Closing CTAs    — /about · /contact · WhatsApp.
+ *   8. Verifiable foot — HarvardX cert + Companies House.
+ *
+ * JSON-LD: ProfilePage (with dateCreated/dateModified), Person
+ * (alumniOf Loughborough + Harvard, hasCredential the HarvardX edX
+ * certificate, mainEntityOfPage + subjectOf the /work collection), and
+ * a DefinedTermSet of the frameworks Jordan has authored.
+ */
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import PageHero from "../components/PageHero.astro";
+import { site, founderPerson } from "../site.config";
+
+// Frameworks Jordan has authored — pulled at build from the blog
+// collection (same getCollection pattern work.astro uses). A post that
+// sets `framework` in frontmatter is a published, citable methodology.
+// We surface each by name + one-line description and link to the post.
+// The framework's machine-readable @id is minted by blog/[...slug].astro
+// as `${site.url}/blog/${post.id}/#framework`; we reference that exact
+// @id below so the DefinedTermSet here stitches to the per-post
+// DefinedTerm nodes. Names/descriptions come straight from frontmatter —
+// nothing is invented here.
+const frameworkPosts = (await getCollection("blog"))
+  .filter((p) => p.data.framework)
+  .sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
+const frameworks = frameworkPosts.map((p) => ({
+  name: p.data.framework!.name,
+  description: p.data.framework!.description,
+  url: `${site.url}/blog/${p.id}/`,
+  id: `${site.url}/blog/${p.id}/#framework`,
+}));
+
+const founder: any = (site as any).founder ?? {};
+const company: any = (site as any).company ?? {};
+// /jordan is the founder bio page — prefer the personal LinkedIn.
+const linkedinUrl: string | undefined =
+  (site as any).social?.linkedinPersonal ?? founder.linkedin;
+
+const HARVARDX_CERT_URL =
+  "https://courses.edx.org/certificates/614c26ddea004818a73d50ad8b264855";
+
+const chips: { label: string; sub: string }[] = [
+  { label: "Loughborough", sub: "Architectural Engineering & Design Management (BSc)" },
+  { label: "HarvardX", sub: "GSD1x: The Architectural Imagination" },
+  { label: "20+ years", sub: "Building websites, since 2006" },
+  { label: "Technical Co-Founder", sub: "Interim CTO, early-stage startups" },
+];
+
+const informs: { h: string; t: string }[] = [
+  {
+    h: "Systems-first design logic",
+    t: "Every build is treated as a system, not a surface — components, constraints, and the relationships between them, before any aesthetic decision.",
+  },
+  {
+    h: "Performance-led engineering execution",
+    t: "Architecture and tooling chosen for measurable outcomes: sub-second loads, near-perfect Core Web Vitals, and predictable behaviour at scale.",
+  },
+  {
+    h: "Structurally minimal digital architecture",
+    t: "Fewer moving parts, fewer dependencies, less to break. Clarity, speed, and long-term maintainability over feature-count.",
+  },
+];
+
+const journey: { when: string; h: string; t: string }[] = [
+  {
+    when: "Early work",
+    h: "Weebly, then Wix",
+    t: "First exposure to building on the web came through Weebly in school, then Wix. The defining constraint was speed: reducing the gap between intent and deployment to near zero. That constraint shaped my approach more than any tool.",
+  },
+  {
+    when: "Sixth form",
+    h: "WordPress — scale without structure",
+    t: "By sixth form I was building WordPress sites for small organisations and personal projects. It scaled quickly, but introduced structural fragility — plugin dependency, theme coupling, and unpredictable maintenance overhead. The systems worked, but lacked ownership.",
+  },
+  {
+    when: "University",
+    h: "Systems over tools",
+    t: "At university I returned to fundamentals: HTML, CSS, and JavaScript from first principles. This reframed the web as a system of constraints rather than a set of platforms. From there I moved into modern frameworks — React, Next.js, Astro — selected not for trend, but for architectural control and performance characteristics.",
+  },
+];
+
+const operates: { h: string; t: string }[] = [
+  {
+    h: "TicketWave HQ Ltd",
+    t: "A UK-registered platform company building booking, ordering, and ticketing infrastructure for small businesses.",
+  },
+  {
+    h: "UK Web Marketing (studio practice)",
+    t: "A delivery studio building production websites and integrating those systems for UK SMEs, supported by a small bench of trusted collaborators.",
+  },
+];
+
+const jsonld = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ProfilePage",
+      "@id": `${site.url}/jordan#page`,
+      url: `${site.url}/jordan`,
+      name: "Jordan Gilbert — Technical Founder & Builder",
+      // Real first-commit date of this page (split from /about,
+      // 2026-06-03). Literal — not git-wired and not invented later.
+      dateCreated: "2026-06-03",
+      dateModified: "2026-06-03",
+      mainEntity: { "@id": `${site.url}/jordan#person` },
+    },
+    {
+      "@type": "Person",
+      "@id": `${site.url}/jordan#person`,
+      name: founder.name ?? "Jordan Gilbert",
+      ...founderPerson,
+      // Author → evidence: this page is the canonical page about the
+      // person; the portfolio collection is a work he is the subject of.
+      mainEntityOfPage: { "@id": `${site.url}/jordan#page` },
+      subjectOf: [{ "@id": `${site.url}/work#collection` }],
+      worksFor: {
+        "@type": "Organization",
+        name: company.name ?? "TicketWave HQ Ltd",
+        url: site.url,
+      },
+      url: `${site.url}/jordan`,
+      // Canonical portrait — same ImageObject URL referenced by the
+      // Organization founder block on /about so Google can stitch
+      // the Person ↔ Organization graph through the image entity.
+      image: {
+        "@type": "ImageObject",
+        "@id": `${site.url}/jordan#portrait`,
+        url: `${site.url}/jordan-gilbert-technical-co-founder-uk-web-marketing.jpg`,
+        contentUrl: `${site.url}/jordan-gilbert-technical-co-founder-uk-web-marketing.jpg`,
+        width: 560,
+        height: 700,
+        caption: "Portrait of Jordan Gilbert, Technical Co-Founder & Interim CTO, TicketWave HQ",
+      },
+      // sameAs comes from the shared founderPerson spread above.
+    },
+    // The set of named methodologies Jordan has authored. Each member
+    // is the per-post DefinedTerm node minted by blog/[...slug].astro
+    // (matching #framework @id), so this set stitches the bio page to
+    // the published frameworks without duplicating their definitions.
+    {
+      "@type": "DefinedTermSet",
+      "@id": `${site.url}/jordan#frameworks`,
+      name: "Frameworks authored by Jordan Gilbert",
+      creator: { "@id": `${site.url}/jordan#person` },
+      hasDefinedTerm: frameworks.map((f) => ({ "@id": f.id })),
+    },
+  ],
+};
+---
+<Base
+  title={`Jordan Gilbert — Technical Founder of UK Web Marketing`}
+  description={`Jordan Gilbert — Technical Co-Founder & Interim CTO. 20+ years building websites, since 2006. Loughborough engineer, HarvardX (GSD1x) alum.`}
+  path="jordan/"
+  jsonld={jsonld}
+  breadcrumbs={[{ name: "Jordan" }]}
+>
+
+  {/* ── 1. HERO ───────────────────────────────────────────────── */}
+  <PageHero variant="aurora" orbs="single" innerMax={1080} pad="84px 0 64px" emStyle="glow-italic">
+    <div class="jd-hero-grid">
+      <div class="jd-hero-copy">
+        <p class="eyebrow eyebrow-light">About the founder</p>
+        <h1>Jordan Gilbert &mdash; <em>Technical Founder & Builder</em>.</h1>
+        <p class="phero-lede">
+          Engineer turned builder, then operator. I&rsquo;ve been building websites for over 20 years
+          &mdash; since primary school in 2006 &mdash; these days shipping production small-business
+          sites, alongside roles as Technical Co-Founder and Interim CTO for early-stage startups.
+        </p>
+        <p class="phero-sub">
+          My work sits at the intersection of architectural systems thinking, software
+          engineering, and applied digital infrastructure.
+        </p>
+        <div class="jd-hero-ctas">
+          <a class="btn btn-primary btn-lg" href="/about">About the company &rarr;</a>
+          <a class="btn btn-line btn-lg" href="/contact">Get in touch</a>
+        </div>
+      </div>
+      <figure class="jd-hero-photo" data-reveal>
+        <img
+          src="/jordan-gilbert-technical-co-founder-uk-web-marketing.jpg"
+          alt="Portrait of Jordan Gilbert, Technical Co-Founder &amp; Interim CTO, TicketWave HQ"
+          loading="eager"
+          decoding="async"
+          width="560"
+          height="700"
+        />
+        <figcaption>
+          Jordan Gilbert &mdash; Technical Co-Founder &amp; Interim CTO, TicketWave HQ; founder of UK Web Marketing.
+        </figcaption>
+      </figure>
+    </div>
+  </PageHero>
+
+  {/* ── 2. CREDIBILITY CHIPS ──────────────────────────────────── */}
+  <section class="section jd-chips-section">
+    <div class="wrap">
+      <ul class="jd-chips" aria-label="Credentials">
+        {chips.map((c) => (
+          <li class="jd-chip">
+            <strong>{c.label}</strong>
+            <span>{c.sub}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  {/* ── 3. ACADEMIC & TECHNICAL FOUNDATION ────────────────────── */}
+  <section class="section section-tint jd-acad-section">
+    <div class="wrap jd-prose">
+      <div class="sec-head">
+        <p class="eyebrow">Academic &amp; technical foundation</p>
+        <h2>Engineering at Loughborough; architectural imagination at Harvard.</h2>
+      </div>
+      <div class="jd-acad-grid">
+
+        <article class="jd-acad" data-reveal>
+          <p class="jd-acad-eyebrow">BSc &middot; Loughborough University</p>
+          <h3>Architectural Engineering &amp; Design Management</h3>
+          <p>
+            Focus: architectural design development, computational and parametric modelling
+            workflows, integrated engineering and construction management, interdisciplinary
+            collaboration, and BIM-driven common data environments.
+          </p>
+        </article>
+
+        <article class="jd-acad" data-reveal>
+          <p class="jd-acad-eyebrow">HarvardX &middot; Harvard University (via Harvard Graduate School of Design)</p>
+          <h3>GSD1x: The Architectural Imagination</h3>
+          <p>
+            Study in architectural theory, spatial reasoning, and conceptual design frameworks.
+            Instructor: K. Michael Hays.
+          </p>
+          <p class="jd-cert">
+            <a href={HARVARDX_CERT_URL} target="_blank" rel="noopener noreferrer">
+              Verify certificate &rarr;
+            </a>
+          </p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  {/* ── 4. HOW THIS INFORMS MY WORK ───────────────────────────── */}
+  <section class="section jd-informs-section">
+    <div class="wrap jd-prose">
+      <div class="sec-head">
+        <p class="eyebrow">How this informs my work</p>
+        <h2>Architectural training applied to software systems.</h2>
+        <p class="sec-sub">
+          This combination of architectural training and systems engineering defines my
+          approach. I treat every build as a system, not a surface &mdash; optimised for
+          clarity, speed, and long-term maintainability.
+        </p>
+      </div>
+      <ol class="jd-informs-list">
+        {informs.map((b, i) => (
+          <li>
+            <span class="jd-informs-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+            <div>
+              <h3>{b.h}</h3>
+              <p>{b.t}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  {/* ── 5. HOW I GOT HERE ─────────────────────────────────────── */}
+  <section class="section section-tint jd-journey-section">
+    <div class="wrap jd-prose">
+      <div class="sec-head">
+        <p class="eyebrow">How I got here</p>
+        <h2>Weebly &rarr; Wix &rarr; WordPress &rarr; systems over tools.</h2>
+        <p class="sec-sub">
+          A progression toward control, performance, and architectural clarity.
+        </p>
+      </div>
+      <div class="jd-journey-grid">
+        {journey.map((j) => (
+          <article class="jd-step" data-reveal>
+            <span class="jd-step-when">{j.when}</span>
+            <h3>{j.h}</h3>
+            <p>{j.t}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* ── 5b. FRAMEWORKS I'VE PUBLISHED ─────────────────────────── */}
+  {frameworks.length > 0 && (
+    <section class="section jd-frameworks-section">
+      <div class="wrap jd-prose">
+        <div class="sec-head">
+          <p class="eyebrow">Frameworks I&rsquo;ve published</p>
+          <h2>Named methodologies, written down and citable.</h2>
+          <p class="sec-sub">
+            Not just opinions &mdash; the repeatable thinking I apply, written up in the open.
+          </p>
+        </div>
+        <div class="jd-frameworks-grid">
+          {frameworks.map((f) => (
+            <a class="jd-framework" href={f.url} data-reveal>
+              <h3>{f.name}</h3>
+              <p>{f.description}</p>
+              <span class="jd-framework-read">Read the framework &rarr;</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ── 6. WHAT I OPERATE ─────────────────────────────────────── */}
+  <section class="section section-dark jd-operate-section">
+    <div class="wrap jd-prose">
+      <div class="sec-head">
+        <p class="eyebrow eyebrow-light">What I operate</p>
+        <h2>Two systems <em>in parallel</em>.</h2>
+      </div>
+      <ol class="jd-operate-list">
+        {operates.map((o, i) => (
+          <li>
+            <span class="jd-operate-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+            <div>
+              <h3>{o.h}</h3>
+              <p>{o.t}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p class="jd-operate-foot">
+        <a href="/about">Read more about the company &rarr;</a>
+      </p>
+      {/* Author → evidence cross-links: the bio proves the credentials,
+          these prove the body of work behind them. */}
+      <div class="jd-evidence">
+        <a class="jd-evidence-link" href="/work">90+ sites I&rsquo;ve built &rarr;</a>
+        <a class="jd-evidence-link" href="/blog">What I write &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  {/* ── 7. CLOSING CTAS ───────────────────────────────────────── */}
+  <section class="section jd-close-section">
+    <div class="wrap jd-close">
+      <div class="sec-head center">
+        <p class="eyebrow">Talk directly</p>
+        <h2>No account managers. Just me.</h2>
+        <p class="sec-sub">
+          The fastest way to reach me is WhatsApp &mdash; same-hour reply during working
+          time. Or read about the company side at <a href="/about">/about</a>.
+        </p>
+      </div>
+      <div class="hero-ctas jd-close-ctas">
+        <a class="btn btn-primary btn-lg" href="/about">About the company &rarr;</a>
+        <a class="btn btn-line btn-lg" href="/contact">Get in touch</a>
+        <a class="btn btn-line btn-lg" href={site.whatsappUrl}>WhatsApp a question</a>
+      </div>
+    </div>
+  </section>
+
+  {/* ── 8. VERIFIABLE FOOTER ──────────────────────────────────── */}
+  <section class="section jd-verify-section">
+    <div class="wrap jd-verify">
+      <p>
+        <strong>Verifiable.</strong>{" "}
+        HarvardX certificate verified externally &middot;{" "}
+        <a href={HARVARDX_CERT_URL} target="_blank" rel="noopener noreferrer">edX certificate &rarr;</a>{" "}
+        &middot; Companies House: {company.name ?? "TicketWave HQ Ltd"}{" "}
+        {company.number && (
+          <>
+            #
+            <a
+              href={`https://find-and-update.company-information.service.gov.uk/company/${company.number}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {company.number} &rarr;
+            </a>
+          </>
+        )}
+      </p>
+    </div>
+  </section>
+
+  <style>
+    :root {
+      --jd-wrap: 1080px;
+      --jd-prose: 760px;
+      --jd-display-xl: clamp(2.1rem, 4.6vw, 3.4rem);
+      --jd-display-lg: clamp(1.6rem, 3.2vw, 2.3rem);
+      --jd-lede: 1.18rem;
+      --jd-body: 1.04rem;
+      --jd-lh: 1.72;
+      --jd-card-radius: 18px;
+    }
+
+    /* ── HERO ──────────────────────────────────────────────────── */
+    .jd-hero-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: clamp(28px, 5vw, 64px);
+      align-items: center;
+    }
+    .jd-hero-copy h1 {
+      font-size: var(--jd-display-xl);
+      line-height: 1.05;
+      margin: 12px 0 16px;
+      max-width: 18ch;
+    }
+    .jd-hero-copy .phero-lede { max-width: 46ch; }
+    .jd-hero-copy .phero-sub {
+      margin-top: 10px;
+      max-width: 46ch;
+      color: var(--on-dark, #d6dee6);
+      font-size: 1.02rem;
+      line-height: 1.6;
+      opacity: .9;
+    }
+    .jd-hero-ctas {
+      margin-top: 22px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .jd-hero-photo {
+      margin: 0;
+      aspect-ratio: 4/5;
+      border-radius: var(--jd-card-radius);
+      overflow: hidden;
+      background: linear-gradient(150deg, var(--accent), var(--accent-dark));
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,.08);
+      max-width: 460px;
+      margin-inline: auto;
+      width: 100%;
+    }
+    .jd-hero-photo img {
+      width: 100%; height: 100%; display: block;
+      object-fit: cover; object-position: 50% 22%;
+    }
+    @media (max-width: 880px) {
+      .jd-hero-grid { grid-template-columns: 1fr; }
+      .jd-hero-photo { max-width: 320px; order: -1; }
+    }
+
+    /* ── CREDIBILITY CHIPS ─────────────────────────────────────── */
+    .jd-chips-section { padding: 36px 0; border-bottom: 1px solid var(--line); }
+    .jd-chips {
+      list-style: none; padding: 0; margin: 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      max-width: var(--jd-wrap); margin-inline: auto;
+    }
+    .jd-chip {
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--accent) 4%, #fff);
+      min-height: 72px;
+      justify-content: center;
+    }
+    .jd-chip strong {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 1.02rem;
+      color: var(--ink);
+      letter-spacing: -.01em;
+    }
+    .jd-chip span {
+      font-size: .82rem;
+      color: var(--soft);
+      letter-spacing: .01em;
+      line-height: 1.45;
+    }
+    @media (max-width: 880px) {
+      .jd-chips { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .jd-chips { grid-template-columns: 1fr; }
+    }
+
+    /* ── PROSE WRAPPERS ────────────────────────────────────────── */
+    .jd-prose { max-width: var(--jd-wrap); margin: 0 auto; }
+    .jd-prose .sec-head { margin-bottom: 32px; max-width: 38ch; }
+    .jd-prose .sec-sub {
+      font-size: var(--jd-lede);
+      line-height: 1.55;
+      color: var(--soft);
+      max-width: 62ch;
+      margin-top: 8px;
+    }
+    .section-dark .jd-prose .sec-sub { color: var(--on-dark, #d6dee6); }
+
+    /* ── ACADEMIC ──────────────────────────────────────────────── */
+    .jd-acad-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .jd-acad {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--accent);
+      border-radius: var(--jd-card-radius);
+      padding: 26px 28px 28px;
+      box-shadow: var(--shadow);
+    }
+    .jd-acad-eyebrow {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: .76rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--accent-dark);
+      margin: 0 0 10px;
+    }
+    .jd-acad h3 {
+      font-size: 1.2rem;
+      margin: 0 0 12px;
+      line-height: 1.3;
+    }
+    .jd-acad p {
+      font-size: .98rem;
+      line-height: 1.65;
+      color: var(--soft);
+      margin: 0 0 10px;
+    }
+    .jd-cert a {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: .92rem;
+      color: var(--accent-dark);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    @media (max-width: 720px) {
+      .jd-acad-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── INFORMS / OPERATE — numbered lists ────────────────────── */
+    .jd-informs-list, .jd-operate-list {
+      list-style: none; padding: 0; margin: 0;
+      display: grid; gap: 24px;
+    }
+    .jd-informs-list li, .jd-operate-list li {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: clamp(16px, 3vw, 36px);
+      align-items: start;
+      padding: 22px 0;
+      border-top: 1px solid var(--line);
+    }
+    .jd-operate-list li {
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .jd-informs-list li:last-child { border-bottom: 1px solid var(--line); }
+    .jd-operate-list li:last-child { border-bottom: 1px solid rgba(255,255,255,.12); }
+    .jd-informs-n, .jd-operate-n {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      line-height: 1;
+      color: var(--accent-dark);
+      letter-spacing: -.03em;
+    }
+    .jd-operate-n { color: var(--accent-glow); }
+    .jd-informs-list h3, .jd-operate-list h3 {
+      font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+      line-height: 1.25;
+      margin: 0 0 8px;
+      letter-spacing: -.01em;
+    }
+    .jd-operate-list h3 { color: #fff; }
+    .jd-informs-list p, .jd-operate-list p {
+      margin: 0;
+      font-size: var(--jd-body);
+      line-height: 1.65;
+      color: var(--soft);
+      max-width: 62ch;
+    }
+    .jd-operate-list p { color: var(--on-dark, #d6dee6); }
+    .jd-operate-foot {
+      margin-top: 28px;
+      font-family: var(--display);
+      font-weight: 600;
+    }
+    .jd-operate-foot a {
+      color: var(--accent-glow);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    @media (max-width: 720px) {
+      .jd-informs-list li, .jd-operate-list li {
+        grid-template-columns: 1fr; gap: 8px;
+      }
+      .jd-informs-n, .jd-operate-n { font-size: 2rem; }
+    }
+
+    /* ── JOURNEY ───────────────────────────────────────────────── */
+    .jd-journey-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .jd-step {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--accent);
+      border-radius: var(--jd-card-radius);
+      padding: 26px 26px 28px;
+      box-shadow: var(--shadow);
+    }
+    .jd-step-when {
+      display: inline-block;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent-dark);
+      margin-bottom: 10px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 10%, #fff);
+    }
+    .jd-step h3 {
+      font-size: 1.18rem;
+      margin: 0 0 10px;
+      line-height: 1.25;
+    }
+    .jd-step p {
+      margin: 0;
+      font-size: .98rem;
+      line-height: 1.7;
+      color: var(--soft);
+    }
+    @media (max-width: 880px) {
+      .jd-journey-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── FRAMEWORKS ────────────────────────────────────────────── */
+    .jd-frameworks-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .jd-framework {
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--accent);
+      border-radius: var(--jd-card-radius);
+      padding: 26px 26px 24px;
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      color: inherit;
+      transition: transform .2s var(--ease), border-color .2s;
+    }
+    .jd-framework:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    .jd-framework h3 {
+      font-size: 1.18rem;
+      margin: 0 0 10px;
+      line-height: 1.25;
+    }
+    .jd-framework p {
+      margin: 0 0 16px;
+      font-size: .96rem;
+      line-height: 1.65;
+      color: var(--soft);
+    }
+    .jd-framework-read {
+      margin-top: auto;
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: .88rem;
+      color: var(--accent-dark);
+    }
+    .jd-framework:hover .jd-framework-read { text-decoration: underline; text-underline-offset: 3px; }
+    @media (max-width: 880px) {
+      .jd-frameworks-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── EVIDENCE CROSS-LINKS (dark operate section) ───────────── */
+    .jd-evidence {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .jd-evidence-link {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: .98rem;
+      color: var(--accent-glow);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ── CLOSE ─────────────────────────────────────────────────── */
+    .jd-close { max-width: var(--jd-prose); margin: 0 auto; text-align: center; }
+    .jd-close-ctas {
+      justify-content: center;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    /* ── VERIFY FOOT ───────────────────────────────────────────── */
+    .jd-verify-section { padding: 18px 0 48px; }
+    .jd-verify {
+      max-width: var(--jd-wrap);
+      margin: 0 auto;
+      text-align: center;
+      font-size: .9rem;
+      color: var(--soft);
+      line-height: 1.7;
+    }
+    .jd-verify a {
+      color: var(--accent-dark);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ── Display-em gradient ───────────────────────────────────── */
+    h1 em, h2 em {
+      font-style: italic;
+      background: var(--g-text, linear-gradient(115deg,#6D5EFC,#A855F7,#5B4FE5));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      display: inline-block;
+      padding-inline-end: .12em;
+    }
+    .section-dark h2 em {
+      background: linear-gradient(115deg, var(--accent-glow), #d4ccff, var(--accent-glow));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+    @media (forced-colors: active) {
+      h1 em, h2 em, .section-dark h2 em {
+        background: none;
+        -webkit-text-fill-color: CanvasText;
+        color: CanvasText;
+      }
+    }
+  </style>
+</Base>
