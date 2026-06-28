@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+title: "Jordan Gilbert — Founder Bio"
+authors:
+  - family-names: Gilbert
+    given-names: Jordan
+url: "https://ukwebmarketing.com/jordan"
+repository-code: "https://github.com/sansware/founder-bio"
+license: CC-BY-4.0
