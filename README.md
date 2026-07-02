@@ -56,6 +56,15 @@ The full Astro source for the live page is at [`sources/jordan.astro`](./sources
 - **UK Web Marketing:** [@Ukwebmarketing](https://github.com/Ukwebmarketing)
 - **Orenva Health:** [@Orenva-Health](https://github.com/Orenva-Health)
 
+## Projects & tools
+
+Public repositories that sit alongside this one: [site-templates](https://github.com/sansware/site-templates) and the [eu-sovereignty-checklist](https://github.com/sansware/eu-sovereignty-checklist).
+
+## See also
+
+- [@sansware](https://github.com/sansware) profile
+- Author page: [access.ticketwavehq.com/author/jordan-gilbert](https://access.ticketwavehq.com/author/jordan-gilbert)
+
 ## License
 
 The text content of this repository is released under the **Creative Commons Attribution 4.0 International License** ([CC BY 4.0](./LICENSE)). You are free to share and adapt the bio and credential information, including for commercial use, provided you give appropriate credit. See [`NOTICE`](./NOTICE) for the human-readable summary.
